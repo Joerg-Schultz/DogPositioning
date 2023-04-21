@@ -9,6 +9,7 @@
 // This code does not average multiple position measurements!
 
 #include <SPI.h>
+#include <BluetoothSerial.h>
 #include "DW1000Ranging.h"
 #include "DW1000.h"
 
@@ -33,12 +34,23 @@ char tag_addr[] = "7D:00:22:EA:82:60:3B:9C";
 #define N_ANCHORS 3
 #define ANCHOR_DISTANCE_EXPIRED 5000   //measurements older than this are ignore (milliseconds)
 
-// global variables, input and output
+BluetoothSerial BTSerial;
 
+// global variables, input and output
+/** Wohnzimmer
 float anchor_matrix[N_ANCHORS][3] = { //list of anchor coordinates, relative to chosen origin.
-        {0.00, 0.00, 0.97},  //Anchor labeled #1
-        {8.00, 0.00, 1.14},//Anchor labeled #2
-        {4.00, 8.00, 0.6}, //Anchor labeled #3
+        {0.35, 0.93, 0.97},  //Anchor labeled #1 Sofa
+        {4.10, 0.90, 1.14},//Anchor labeled #2 Heizung
+        {2.30, 4.05, 0.6}, //Anchor labeled #3 Mitte Durchgang
+};  //Z values are ignored in this code
+ */
+/** Hof
+ *
+ */
+float anchor_matrix[N_ANCHORS][3] = { //list of anchor coordinates, relative to chosen origin.
+        {0.0, 0.0, 0.97},  //Anchor labeled #1 Tor links
+        {5.0, 0.0, 1.14},//Anchor labeled #2 Tor rechts
+        {2.7, 13.5, 0.6}, //Anchor labeled #3 Stuhl
 };  //Z values are ignored in this code
 
 uint32_t last_anchor_update[N_ANCHORS] = {0}; //millis() value last time anchor was seen
@@ -183,6 +195,9 @@ void newRange()
         Serial.print(current_tag_position[1]);
         Serial.write(',');
         Serial.println(current_distance_rmse);
+        // json String of  position
+        String json = "{\"x\":" + String(current_tag_position[0]) + ",\"y\":" + String(current_tag_position[1]) + "}";
+        BTSerial.println(json);
     }
 }  //end newRange
 
@@ -201,6 +216,7 @@ void inactiveDevice(DW1000Device *device)
 void setup()
 {
     Serial.begin(115200);
+    BTSerial.begin("DogPositioning");
     delay(1000);
 
     //initialize configuration
